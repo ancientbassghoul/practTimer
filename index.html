@@ -521,9 +521,9 @@ document.getElementById('mainBtn').addEventListener('click',()=>{
       if(S.wasLong){S.longSecs=0;S.shortSecs=0;}else{S.shortSecs=0;}
       S.inBreak=false;S.shortTriggered=false;S.longHit=false;S.breakRunning=false;S.breakSecs=0;S.breakDuration=0;clearMsg();stopAlarm();
     }
-    S.running=true;setBtn('STOP');
+    S.running=true;setBtn('STOP');startKeepAwake();
   }else if(label==='STOP'){
-    S.running=false;
+    S.running=false;stopKeepAwake();
     if(S.shortTriggered){
       const c=cfg();const dur=(S.longHit?c.longBreak:c.shortBreak)*60;
       S.breakDuration=dur;S.breakSecs=dur;S.breakRunning=true;S.inBreak=true;S.wasLong=S.longHit;setBtn('BEGIN');
@@ -694,6 +694,29 @@ document.getElementById('cfgReset').addEventListener('click',()=>{
 });
 
 loadConfig();
+
+// ── KEEP AWAKE — silent audio loop ───────────────────────────────────────────
+// ── KEEP AWAKE — Wake Lock API only ──────────────────────────────────────────
+let _wakeLock = null;
+
+async function startKeepAwake(){
+  if('wakeLock' in navigator){
+    try {
+      _wakeLock = await navigator.wakeLock.request('screen');
+    } catch(e){ console.warn('Wake lock failed:', e); }
+  }
+}
+
+function stopKeepAwake(){
+  if(_wakeLock){ try{ _wakeLock.release(); }catch(e){} _wakeLock = null; }
+}
+
+// Re-acquire wake lock when tab comes back to foreground
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState==='visible' && _wakeLock===null && S.running){
+    startKeepAwake();
+  }
+});
 
 // Responsive chassis scaling
 function scaleChassisToFit() {
