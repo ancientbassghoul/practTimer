@@ -253,6 +253,8 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   letter-spacing:.06em;
   margin-top:10px;
 }
+#cfgPresetSelect option{background:#0e0e1a;color:#ccc}
+#cfgPresetSelect:focus{border-color:#3a3a5a}
 </style>
 </head>
 <body>
@@ -272,6 +274,11 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 <button class="cfg-toggle" id="cfgToggle">&#9660; Configure</button>
 
 <div class="cfg-panel" id="cfgPanel">
+  <!-- Preset selector — full width at top -->
+  <div class="cfg-field cfg-full" style="display:flex;align-items:center;gap:12px">
+    <label style="white-space:nowrap">PRESET</label>
+    <select id="cfgPresetSelect" style="flex:1;background:#070710;border:1px solid #2a2a3a;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:1rem;padding:6px 10px;border-radius:4px;outline:none;letter-spacing:.1em"></select>
+  </div>
   <div class="cfg-field">
     <label>Time Until Long Break</label>
     <div class="cfg-row"><input type="number" id="cfgLongPlay" value="90" min="0.01" step="any"/><span class="cfg-unit">MIN</span></div>
@@ -309,10 +316,16 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <label class="cfg-coffee-label">COFFEE <span style="line-height:1;vertical-align:middle;font-size:13px">☕</span></label>
     <p class="cfg-coffee-text">Hey, if you enjoy PractTimer, you can <a class="cfg-coffee-link" href="https://ko-fi.com/ancientbassghoul" target="_blank">buy me a coffee</a>. It'll make my day :-)</p>
   </div>
-  <!-- Buttons — full width, centered -->
-  <div class="cfg-field cfg-full" style="display:flex;justify-content:center;gap:10px;padding-top:6px;border-top:1px solid #1e1e30">
-    <button class="cfg-action-btn" id="cfgSave">&#128190; Save Config</button>
-    <button class="cfg-action-btn cfg-action-reset" id="cfgReset">&#8635; Reset to Defaults</button>
+  <!-- Preset buttons — full width -->
+  <div class="cfg-field cfg-full" style="display:flex;justify-content:center;gap:8px;padding-top:6px;border-top:1px solid #1e1e30;flex-wrap:wrap">
+    <button class="cfg-action-btn" id="btnSavePreset">&#128190; Save Preset</button>
+    <button class="cfg-action-btn" id="btnSavePresetAs">&#128190; Save Preset As&#8230;</button>
+    <button class="cfg-action-btn" id="btnRenamePreset">&#9998; Rename Preset</button>
+    <button class="cfg-action-btn cfg-action-reset" id="btnDeletePreset">&#128465; Delete Preset</button>
+  </div>
+  <!-- Changed indicator -->
+  <div class="cfg-field cfg-full" style="min-height:20px;text-align:center">
+    <span id="presetChangedMsg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:rgba(255,160,40,0.75)">&#9679; PRESET HAS CHANGED&#8230;</span>
   </div>
 </div>
 
@@ -643,57 +656,180 @@ function sfxBreakEnd(){
 document.getElementById('silenceBtn').addEventListener('click', stopAlarm);
 
 // ── CONFIG SAVE / LOAD / RESET ────────────────────────────────────────────────
-const DEFAULTS = {longPlay:90, longBreak:30, shortPlay:20, shortBreak:5, soundBreakStart:false, soundBreakEnd:true, repeatAlarm:true, subtleAlarm:false};
+// ── PRESETS ───────────────────────────────────────────────────────────────────
+const BUILT_IN_PRESETS = {
+  'Default':    {longPlay:90,  longBreak:30,   shortPlay:20,  shortBreak:5,    soundBreakStart:false, soundBreakEnd:true, repeatAlarm:true, subtleAlarm:false},
+  'Quick Test': {longPlay:0.5, longBreak:0.16, shortPlay:0.1, shortBreak:0.1,  soundBreakStart:false, soundBreakEnd:true, repeatAlarm:true, subtleAlarm:false},
+};
 
-function loadConfig(){
-  try {
-    const saved = JSON.parse(localStorage.getItem('bassTimerConfig'));
-    if(!saved) return;
-    if(saved.longPlay   != null) document.getElementById('cfgLongPlay').value   = saved.longPlay;
-    if(saved.longBreak  != null) document.getElementById('cfgLongBreak').value  = saved.longBreak;
-    if(saved.shortPlay  != null) document.getElementById('cfgShortPlay').value  = saved.shortPlay;
-    if(saved.shortBreak != null) document.getElementById('cfgShortBreak').value = saved.shortBreak;
-    if(saved.soundBreakStart != null) document.getElementById('cfgSoundBreakStart').checked = saved.soundBreakStart;
-    if(saved.soundBreakEnd   != null) document.getElementById('cfgSoundBreakEnd').checked   = saved.soundBreakEnd;
-    if(saved.repeatAlarm    != null) document.getElementById('cfgRepeatAlarm').checked    = saved.repeatAlarm;
-    if(saved.subtleAlarm    != null) document.getElementById('cfgSubtleAlarm').checked    = saved.subtleAlarm;
-    syncSubtleAlarmRow();
-    updateHints();
-  } catch(e){ console.warn('Could not load config:', e); }
-}
-
-document.getElementById('cfgSave').addEventListener('click',()=>{
-  const data = {
-    longPlay:   parseFloat(document.getElementById('cfgLongPlay').value),
-    longBreak:  parseFloat(document.getElementById('cfgLongBreak').value),
-    shortPlay:  parseFloat(document.getElementById('cfgShortPlay').value),
-    shortBreak: parseFloat(document.getElementById('cfgShortBreak').value),
+function readFields(){
+  return {
+    longPlay:        parseFloat(document.getElementById('cfgLongPlay').value)||90,
+    longBreak:       parseFloat(document.getElementById('cfgLongBreak').value)||30,
+    shortPlay:       parseFloat(document.getElementById('cfgShortPlay').value)||20,
+    shortBreak:      parseFloat(document.getElementById('cfgShortBreak').value)||5,
     soundBreakStart: document.getElementById('cfgSoundBreakStart').checked,
     soundBreakEnd:   document.getElementById('cfgSoundBreakEnd').checked,
     repeatAlarm:     document.getElementById('cfgRepeatAlarm').checked,
     subtleAlarm:     document.getElementById('cfgSubtleAlarm').checked,
   };
-  localStorage.setItem('bassTimerConfig', JSON.stringify(data));
-  const btn = document.getElementById('cfgSave');
+}
+
+function applyPreset(data){
+  document.getElementById('cfgLongPlay').value   = data.longPlay;
+  document.getElementById('cfgLongBreak').value  = data.longBreak;
+  document.getElementById('cfgShortPlay').value  = data.shortPlay;
+  document.getElementById('cfgShortBreak').value = data.shortBreak;
+  document.getElementById('cfgSoundBreakStart').checked = data.soundBreakStart;
+  document.getElementById('cfgSoundBreakEnd').checked   = data.soundBreakEnd;
+  document.getElementById('cfgRepeatAlarm').checked     = data.repeatAlarm;
+  document.getElementById('cfgSubtleAlarm').checked     = data.subtleAlarm;
+  updateHints(); syncRepeatAlarmRow(); syncSubtleAlarmRow();
+}
+
+function getUserPresets(){
+  try { return JSON.parse(localStorage.getItem('practTimerPresets')) || {}; } catch(e){ return {}; }
+}
+function saveUserPresets(p){ localStorage.setItem('practTimerPresets', JSON.stringify(p)); }
+
+function getAllPresets(){
+  return Object.assign({}, BUILT_IN_PRESETS, getUserPresets());
+}
+
+function isBuiltIn(name){ return name in BUILT_IN_PRESETS; }
+
+function getCurrentPresetName(){
+  return localStorage.getItem('practTimerCurrentPreset') || 'Default';
+}
+function setCurrentPresetName(name){
+  localStorage.setItem('practTimerCurrentPreset', name);
+}
+
+function populateSelect(selectName){
+  const sel = document.getElementById('cfgPresetSelect');
+  const all = getAllPresets();
+  sel.innerHTML = '';
+  Object.keys(all).forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = name;
+    if(name === selectName) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function updatePresetButtons(){
+  const name = document.getElementById('cfgPresetSelect').value;
+  const builtIn = isBuiltIn(name);
+  document.getElementById('btnSavePreset').disabled   = builtIn;
+  document.getElementById('btnRenamePreset').disabled = builtIn;
+  document.getElementById('btnDeletePreset').disabled = builtIn;
+  document.getElementById('btnSavePreset').style.opacity   = builtIn ? '0.4' : '1';
+  document.getElementById('btnRenamePreset').style.opacity = builtIn ? '0.4' : '1';
+  document.getElementById('btnDeletePreset').style.opacity = builtIn ? '0.4' : '1';
+}
+
+function hideChangedMsg(){ document.getElementById('presetChangedMsg').style.display='none'; }
+function showChangedMsg(){ document.getElementById('presetChangedMsg').style.display='inline'; }
+
+function checkIfChanged(){
+  const name = document.getElementById('cfgPresetSelect').value;
+  const stored = getAllPresets()[name];
+  if(!stored){ hideChangedMsg(); return; }
+  const cur = readFields();
+  const changed = Object.keys(stored).some(k => String(stored[k]) !== String(cur[k]));
+  changed ? showChangedMsg() : hideChangedMsg();
+}
+
+// Preset selector change
+document.getElementById('cfgPresetSelect').addEventListener('change', ()=>{
+  const name = document.getElementById('cfgPresetSelect').value;
+  setCurrentPresetName(name);
+  applyPreset(getAllPresets()[name]);
+  updatePresetButtons();
+  hideChangedMsg();
+});
+
+// Save Preset
+document.getElementById('btnSavePreset').addEventListener('click', ()=>{
+  const name = document.getElementById('cfgPresetSelect').value;
+  if(isBuiltIn(name)) return;
+  const p = getUserPresets();
+  p[name] = readFields();
+  saveUserPresets(p);
+  hideChangedMsg();
+  const btn = document.getElementById('btnSavePreset');
   const orig = btn.textContent; btn.textContent = '✓ Saved!';
   setTimeout(()=>btn.textContent=orig, 1500);
 });
 
-document.getElementById('cfgReset').addEventListener('click',()=>{
-  document.getElementById('cfgLongPlay').value   = DEFAULTS.longPlay;
-  document.getElementById('cfgLongBreak').value  = DEFAULTS.longBreak;
-  document.getElementById('cfgShortPlay').value  = DEFAULTS.shortPlay;
-  document.getElementById('cfgShortBreak').value = DEFAULTS.shortBreak;
-  document.getElementById('cfgSoundBreakStart').checked = DEFAULTS.soundBreakStart;
-  document.getElementById('cfgSoundBreakEnd').checked   = DEFAULTS.soundBreakEnd;
-  document.getElementById('cfgRepeatAlarm').checked    = DEFAULTS.repeatAlarm;
-  document.getElementById('cfgSubtleAlarm').checked    = DEFAULTS.subtleAlarm;
-  localStorage.removeItem('bassTimerConfig');
-  updateHints();
-  syncRepeatAlarmRow();
+// Save Preset As...
+document.getElementById('btnSavePresetAs').addEventListener('click', ()=>{
+  const cur = readFields();
+  const defaultName = `${cur.longPlay}_${cur.longBreak}_${cur.shortPlay}_${cur.shortBreak}`;
+  const name = window.prompt('Enter preset name:', defaultName);
+  if(!name || !name.trim()) return;
+  const trimmed = name.trim();
+  if(isBuiltIn(trimmed)){ alert(`"${trimmed}" is a built-in preset and cannot be overwritten.`); return; }
+  const p = getUserPresets();
+  p[trimmed] = cur;
+  saveUserPresets(p);
+  setCurrentPresetName(trimmed);
+  populateSelect(trimmed);
+  updatePresetButtons();
+  hideChangedMsg();
 });
 
-loadConfig();
+// Rename Preset
+document.getElementById('btnRenamePreset').addEventListener('click', ()=>{
+  const oldName = document.getElementById('cfgPresetSelect').value;
+  if(isBuiltIn(oldName)) return;
+  const newName = window.prompt('Rename preset to:', oldName);
+  if(!newName || !newName.trim()) return;
+  const trimmed = newName.trim();
+  if(isBuiltIn(trimmed)){ alert(`"${trimmed}" is a built-in name and cannot be used.`); return; }
+  const p = getUserPresets();
+  p[trimmed] = p[oldName];
+  delete p[oldName];
+  saveUserPresets(p);
+  setCurrentPresetName(trimmed);
+  populateSelect(trimmed);
+  updatePresetButtons();
+});
+
+// Delete Preset
+document.getElementById('btnDeletePreset').addEventListener('click', ()=>{
+  const sel = document.getElementById('cfgPresetSelect');
+  const name = sel.value;
+  if(isBuiltIn(name)) return;
+  const prevIndex = Math.max(0, sel.selectedIndex - 1);
+  const p = getUserPresets();
+  delete p[name];
+  saveUserPresets(p);
+  // Select the preset above the deleted one
+  const allNames = Object.keys(getAllPresets());
+  const selectName = allNames[prevIndex] || 'Default';
+  setCurrentPresetName(selectName);
+  populateSelect(selectName);
+  applyPreset(getAllPresets()[selectName]);
+  updatePresetButtons();
+  hideChangedMsg();
+});
+
+// Watch all config fields for changes
+['cfgLongPlay','cfgLongBreak','cfgShortPlay','cfgShortBreak'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', checkIfChanged);
+});
+['cfgSoundBreakStart','cfgSoundBreakEnd','cfgRepeatAlarm','cfgSubtleAlarm'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', checkIfChanged);
+});
+
+// Init
+(function(){
+  const currentName = getCurrentPresetName();
+  populateSelect(currentName);
+  applyPreset(getAllPresets()[currentName] || BUILT_IN_PRESETS['Default']);
+  updatePresetButtons();
+})();
 
 // ── KEEP AWAKE — silent audio loop ───────────────────────────────────────────
 // ── KEEP AWAKE — Wake Lock API only ──────────────────────────────────────────
