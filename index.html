@@ -520,7 +520,7 @@ function tick(){
   }
   if(S.breakRunning&&S.breakSecs>0){
     S.breakSecs--;
-    if(S.breakSecs===0){S.breakRunning=false;S.breakDuration=0;showMsg('Please continue practicing when ready.','green');setBtn('BEGIN');sfxBreakEnd();}
+    if(S.breakSecs<=0){S.breakRunning=false;S.breakDuration=0;showMsg('Please continue practicing when ready.','green');setBtn('BEGIN');sfxBreakEnd();}
   }
   renderAll();
 }
@@ -624,7 +624,7 @@ function soundBreakStart(){
   if(document.getElementById('cfgSubtleAlarm').checked){
     // Subtle mode: two regular chimes, no dismiss needed
     soundBreakEnd();
-    setTimeout(()=>soundBreakEnd(), 1000); // ← SUBTLE ALARM GAP — change this value (ms) to adjust gap between the two chimes
+    setTimeout(()=>soundBreakEnd(), 1500); // ← SUBTLE ALARM GAP — change this value (ms) to adjust gap between the two chimes
   } else {
     // Doc Brown mode: fires once
     try {
