@@ -369,6 +369,33 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 
 /* CONFIG EXPORT/IMPORT */
 .cfg-data-btns{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ── CONFIG ACTION BUTTONS ──────────────────────────────────── */
+.cfg-action-btn{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.18em;text-transform:uppercase;background:#0e0e1a;border:1px solid #3a3a50;color:#aaa;padding:6px 14px;border-radius:4px;cursor:pointer;transition:color .2s,border-color .2s;white-space:nowrap}
+.cfg-action-btn:hover{color:#ccc;border-color:#666}
+.cfg-action-btn:disabled{opacity:.4;cursor:default}
+.cfg-action-reset{border-color:rgba(255,34,0,.3);color:rgba(255,100,60,.8)}
+.cfg-action-reset:hover{border-color:rgba(255,34,0,.6);color:rgba(255,100,60,1)}
+/* ── SCRIPT EDITOR ───────────────────────────────────────────── */
+.script-table{width:100%;border-collapse:collapse;font-family:'Barlow Condensed',sans-serif;font-size:14px;letter-spacing:.06em}
+.script-table th{background:#070710;color:#777;font-size:11px;letter-spacing:.22em;text-transform:uppercase;padding:8px 10px;text-align:left;border:1px solid #1e1e30}
+.script-table td{padding:4px 5px;border:1px solid #1a1a28;vertical-align:middle}
+.script-input{background:#070710;border:1px solid #2a2a3a;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:1rem;padding:5px 8px;border-radius:3px;outline:none;width:100%;box-sizing:border-box;transition:border-color .2s}
+.script-input:focus{border-color:#3a3a5a}
+.script-input[type="number"]{-moz-appearance:textfield;text-align:center}
+.script-input[type="number"]::-webkit-outer-spin-button,.script-input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none}
+.script-del-btn{background:none;border:none;color:rgba(255,34,0,.5);font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;transition:color .15s}
+.script-del-btn:hover{color:rgba(255,34,0,1)}
+.script-modal-btns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding-top:4px}
+.script-modal-btn{font-family:'Barlow Condensed',sans-serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;padding:8px 20px;border-radius:4px;cursor:pointer;transition:filter .15s}
+.script-modal-btn:hover{filter:brightness(1.25)}
+.script-modal-btn:active{filter:brightness(.9)}
+.script-modal-btn-save{background:#002208;border:1px solid rgba(0,220,60,.4);color:rgba(0,238,80,.95)}
+.script-modal-btn-saveas{background:#070710;border:1px solid #3a3a50;color:#bbb}
+.script-modal-btn-cancel{background:#2a0800;border:1px solid rgba(255,34,0,.4);color:rgba(255,80,30,.9)}
+#cfgScriptSelect:focus{border-color:#3a3a5a}
+#cfgScriptSelect option{background:#0e0e1a;color:#ccc}
+#cfgScriptSelect{flex:1;min-width:0;background:#070710;border:1px solid #2a2a3a;color:#ccc;font-family:'Barlow Condensed',sans-serif;font-size:1rem;padding:6px 10px;border-radius:4px;outline:none;cursor:pointer;color-scheme:dark}
 </style>
 </head>
 <body>
@@ -409,6 +436,12 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <label>Short Break Duration</label>
     <div class="cfg-row"><input type="number" id="cfgShortBreak" value="5" min="0.01" step="any"/><span class="cfg-unit">MIN</span></div>
   </div>
+  <!-- Use Script row -->
+  <div class="cfg-field cfg-full" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <label style="white-space:nowrap;margin-bottom:0;min-width:90px">USE SCRIPT</label>
+    <select id="cfgScriptSelect"></select>
+    <button class="cfg-action-btn" id="btnEditScript" style="display:none">&#9998; Edit Script</button>
+  </div>
   <!-- Sound alerts: headline + content in one cell -->
   <div class="cfg-field" style="display:flex;flex-direction:column;gap:6px">
     <label>Sound Alerts</label>
@@ -431,7 +464,7 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <p class="cfg-coffee-text">Hey, if you enjoy PractTimer, you can <a class="cfg-coffee-link" href="https://ko-fi.com/ancientbassghoul" target="_blank">buy me a coffee</a>. It'll make my day :-)</p>
   </div>
   <!-- Preset management — full width -->
-  <div class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
+  <div id="presetManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
     <label style="font-size:11px;letter-spacing:.2em;color:#888;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;display:block;margin-bottom:8px">Preset Management</label>
     <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
       <button class="cfg-action-btn" id="btnSavePreset">&#128190; Save Preset</button>
@@ -441,7 +474,7 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     </div>
   </div>
   <!-- Changed indicator -->
-  <div class="cfg-field cfg-full" style="min-height:20px;text-align:center">
+  <div id="presetChangedRow" class="cfg-field cfg-full" style="min-height:20px;text-align:center">
     <span id="presetChangedMsg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:rgba(255,160,40,0.75)">&#9679; PRESET HAS CHANGED&#8230;</span>
   </div>
   <!-- Stats data — full width -->
@@ -504,8 +537,48 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
 <button class="stats-btn" id="statsBtn">&#128200; Practice Stats</button>
 <p class="disclaimer">Disclaimer: practicing at 88mph will not get you back in time.</p>
 
+<!-- SCRIPT DONE MODAL -->
+<div class="modal-overlay" id="scriptDoneModal">
+  <div class="modal-panel" style="width:min(280px,90vw)">
+    <div class="enc-main" style="display:flex;flex-direction:column;align-items:center;gap:22px;padding:36px 28px 28px;text-align:center">
+      <div style="font-family:'Big Shoulders Display',sans-serif;font-size:1.5rem;letter-spacing:.25em;color:#1a1a2a;text-transform:uppercase">Script is done!</div>
+      <button class="script-modal-btn script-modal-btn-save" id="btnScriptDoneOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCRIPT EDITOR MODAL -->
+<div class="modal-overlay" id="scriptModal">
+  <div class="modal-panel" style="width:min(780px,96vw)">
+    <div class="enc-main" style="display:flex;flex-direction:column;align-items:stretch;width:100%;gap:16px;padding:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div class="modal-title" id="scriptModalTitle">Create New Script</div>
+        <button class="modal-close" id="scriptModalClose">&#10005;</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="script-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Message</th>
+              <th style="min-width:130px;text-align:center">Practice Duration (min)</th>
+              <th style="min-width:130px;text-align:center">Break Duration (min)</th>
+              <th style="width:38px"></th>
+            </tr>
+          </thead>
+          <tbody id="scriptTableBody"></tbody>
+        </table>
+      </div>
+      <div class="script-modal-btns">
+        <button class="script-modal-btn script-modal-btn-save" id="btnScriptSave">&#128190; Save</button>
+        <button class="script-modal-btn script-modal-btn-saveas" id="btnScriptSaveAs">&#128190; Save as&#8230;</button>
+        <button class="script-modal-btn script-modal-btn-cancel" id="btnScriptCancel">&#10005; Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-const S={longSecs:0,shortSecs:0,breakSecs:0,running:false,breakRunning:false,inBreak:false,wasLong:false,shortTriggered:false,longHit:false,breakDuration:0};
+const S={longSecs:0,shortSecs:0,breakSecs:0,running:false,breakRunning:false,inBreak:false,wasLong:false,shortTriggered:false,longHit:false,breakDuration:0,scriptActive:false,scriptName:'',scriptRows:[],scriptCurrentRow:0};
 
 function cfg(){
   return{
@@ -635,21 +708,44 @@ function updateHints(){
 
 function tick(){
   const c=cfg();
-  const longThresh=c.longPlay*60,shortThresh=c.shortPlay*60;
+  const longThresh=c.longPlay*60;
+  const scriptOk=S.scriptActive&&S.scriptRows.length>0&&S.scriptCurrentRow<S.scriptRows.length;
+  const shortThresh=scriptOk
+    ?(S.scriptRows[S.scriptCurrentRow].practiceDuration||1)*60
+    :c.shortPlay*60;
   colonVisible=!colonVisible;
   tickStats();
   if(S.running){
     S.longSecs++;S.shortSecs++;
-    if(S.shortSecs===shortThresh&&!S.shortTriggered){
-      S.shortTriggered=true;S.longHit=S.longSecs>=longThresh;
-      showMsg(S.longHit?'Time to take a LONG break!':'Time to take a short break!',S.longHit?'red':'yellow');
+    // Script mode: show current row message during practice
+    if(scriptOk&&!S.shortTriggered){
+      showMsg(S.scriptRows[S.scriptCurrentRow].message,'green');
+    }
+    if((scriptOk?S.shortSecs>=shortThresh:S.shortSecs===shortThresh)&&!S.shortTriggered){
+      S.shortTriggered=true;
+      if(scriptOk){
+        showMsg('Time for a step break!','yellow');
+      }else{
+        S.longHit=S.longSecs>=longThresh;
+        showMsg(S.longHit?'Time to take a LONG break!':'Time to take a short break!',S.longHit?'red':'yellow');
+      }
       sfxBreakStart();
     }
-    if(S.shortTriggered&&!S.longHit&&S.longSecs>=longThresh){S.longHit=true;showMsg('Time to take a LONG break!','red');sfxBreakStart();}
+    if(!scriptOk&&S.shortTriggered&&!S.longHit&&S.longSecs>=longThresh){S.longHit=true;showMsg('Time to take a LONG break!','red');sfxBreakStart();}
   }
-  if(S.breakRunning&&S.breakSecs>0){
-    S.breakSecs--;
-    if(S.breakSecs<=0){S.breakRunning=false;S.breakDuration=0;showMsg('Please continue practicing when ready.','green');setBtn('BEGIN');sfxBreakEnd();}
+  if(S.breakRunning){
+    if(S.breakSecs>0) S.breakSecs--;
+    if(S.breakSecs<=0){
+      S.breakRunning=false;S.breakDuration=0;setBtn('BEGIN');
+      if(S.scriptActive){
+        if(S.wasLong){showScriptDoneDialog();}
+        else{sfxBreakEnd();
+          const nextRow=S.scriptRows[S.scriptCurrentRow+1];
+          if(nextRow)showMsg(nextRow.message,'green');
+          else showMsg('Please continue practicing when ready.','green');
+        }
+      }else{sfxBreakEnd();showMsg('Please continue practicing when ready.','green');}
+    }
   }
   renderAll();
 }
@@ -660,29 +756,58 @@ document.getElementById('mainBtn').addEventListener('click',()=>{
   const label=document.getElementById('mainBtn').textContent.toUpperCase();
   if(label==='BEGIN'){
     if(S.inBreak){
-      if(S.wasLong){S.longSecs=0;S.shortSecs=0;}else{S.shortSecs=0;}
-      S.inBreak=false;S.shortTriggered=false;S.longHit=false;S.breakRunning=false;S.breakSecs=0;S.breakDuration=0;clearMsg();stopAlarm();
+      if(S.scriptActive){
+        if(S.wasLong){S.longSecs=0;S.shortSecs=0;S.scriptCurrentRow=0;}
+        else{S.shortSecs=0;S.scriptCurrentRow=Math.min(S.scriptCurrentRow+1,S.scriptRows.length-1);}
+        S.inBreak=false;S.shortTriggered=false;S.longHit=false;S.breakRunning=false;S.breakSecs=0;S.breakDuration=0;stopAlarm();
+        if(S.scriptRows[S.scriptCurrentRow])showMsg(S.scriptRows[S.scriptCurrentRow].message,'green');
+        else clearMsg();
+      }else{
+        if(S.wasLong){S.longSecs=0;S.shortSecs=0;}else{S.shortSecs=0;}
+        S.inBreak=false;S.shortTriggered=false;S.longHit=false;S.breakRunning=false;S.breakSecs=0;S.breakDuration=0;clearMsg();stopAlarm();
+      }
+    }else if(S.scriptActive&&!S.shortTriggered&&S.scriptRows[S.scriptCurrentRow]){
+      showMsg(S.scriptRows[S.scriptCurrentRow].message,'green');
     }
     S.running=true;setBtn('STOP');startKeepAwake();
   }else if(label==='STOP'){
     S.running=false;stopKeepAwake();flushStats();
     if(S.shortTriggered){
-      const c=cfg();const dur=(S.longHit?c.longBreak:c.shortBreak)*60;
-      S.breakDuration=dur;S.breakSecs=dur;S.breakRunning=true;S.inBreak=true;S.wasLong=S.longHit;setBtn('BEGIN');
+      let dur;
+      if(S.scriptActive){
+        dur=(S.scriptRows[S.scriptCurrentRow]?.breakDuration||0)*60;
+        S.wasLong=(S.scriptCurrentRow===S.scriptRows.length-1);
+      }else{
+        const c=cfg();dur=(S.longHit?c.longBreak:c.shortBreak)*60;S.wasLong=S.longHit;
+      }
+      S.breakDuration=dur;S.breakSecs=dur;S.breakRunning=true;S.inBreak=true;setBtn('BEGIN');
     }else{setBtn('BEGIN');}
   }
   renderAll();
 });
 
 document.getElementById('rstLong').addEventListener('click',()=>{
-  const wasHit=S.longHit;S.longSecs=0;S.longHit=false;
-  if(wasHit&&S.shortTriggered)showMsg('Time to take a short break!','yellow');
+  if(S.scriptActive){
+    S.longSecs=0;S.shortSecs=0;S.longHit=false;S.shortTriggered=false;
+    S.scriptCurrentRow=0;S.inBreak=false;S.breakRunning=false;S.breakSecs=0;S.breakDuration=0;S.wasLong=false;
+    stopAlarm();
+    if(S.scriptRows[0])showMsg(S.scriptRows[0].message,'green');else clearMsg();
+    if(!S.running)setBtn('BEGIN');
+  }else{
+    const wasHit=S.longHit;S.longSecs=0;S.longHit=false;
+    if(wasHit&&S.shortTriggered)showMsg('Time to take a short break!','yellow');
+  }
   renderAll();
 });
 document.getElementById('rstShort').addEventListener('click',()=>{
   S.shortSecs=0;S.shortTriggered=false;
-  const b=document.getElementById('msgBox');
-  if(b.classList.contains('red')||b.classList.contains('yellow'))clearMsg();
+  if(S.scriptActive){
+    if(S.scriptRows[S.scriptCurrentRow])showMsg(S.scriptRows[S.scriptCurrentRow].message,'green');
+    else clearMsg();
+  }else{
+    const b=document.getElementById('msgBox');
+    if(b.classList.contains('red')||b.classList.contains('yellow'))clearMsg();
+  }
   renderAll();
 });
 document.getElementById('rstBreak').addEventListener('click',()=>{
@@ -872,6 +997,21 @@ function checkIfChanged(){
 // Preset selector change
 document.getElementById('cfgPresetSelect').addEventListener('change', ()=>{
   const name = document.getElementById('cfgPresetSelect').value;
+  if(name==='__scriptmode__') return;
+  if(S.scriptActive){
+    S.scriptActive=false; S.scriptName=''; S.scriptRows=[]; S.scriptCurrentRow=0;
+    S.shortTriggered=false; S.longHit=false; S.inBreak=false;
+    S.breakRunning=false; S.breakSecs=0; S.breakDuration=0; S.wasLong=false;
+    stopAlarm();
+    const ph=document.getElementById('cfgPresetSelect').querySelector('option[value="__scriptmode__"]');
+    if(ph) ph.remove();
+    document.getElementById('cfgScriptSelect').value='';
+    setTimingFieldsVisible(true);
+    updateStickerLabels();
+    document.getElementById('btnEditScript').style.display='none';
+    clearMsg();
+    renderAll();
+  }
   setCurrentPresetName(name);
   applyPreset(getAllPresets()[name]);
   updatePresetButtons();
@@ -949,7 +1089,10 @@ document.getElementById('btnDeletePreset').addEventListener('click', ()=>{
   document.getElementById(id).addEventListener('input', checkIfChanged);
 });
 ['cfgSoundBreakStart','cfgSoundBreakEnd','cfgRepeatAlarm','cfgSubtleAlarm'].forEach(id=>{
-  document.getElementById(id).addEventListener('change', checkIfChanged);
+  document.getElementById(id).addEventListener('change', ()=>{
+    if(S.scriptActive) saveScriptSoundConfig();
+    else checkIfChanged();
+  });
 });
 
 // Init
@@ -1236,6 +1379,279 @@ document.getElementById('importFileInput').addEventListener('change', e=>{
   };
   reader.readAsText(file);
 });
+
+// ── SCRIPT MODE ──────────────────────────────────────────────────────────────
+let _prevPreset = 'Default';
+let _presetSoundConfig = {soundBreakStart:false,soundBreakEnd:true,repeatAlarm:true,subtleAlarm:false};
+
+const SCRIPT_SOUND_KEY = 'practTimerScriptSound';
+const SCRIPT_SOUND_DEFAULTS = {soundBreakStart:true,subtleAlarm:true,soundBreakEnd:true,repeatAlarm:false};
+
+function readSoundConfig(){
+  return {
+    soundBreakStart: document.getElementById('cfgSoundBreakStart').checked,
+    subtleAlarm:     document.getElementById('cfgSubtleAlarm').checked,
+    soundBreakEnd:   document.getElementById('cfgSoundBreakEnd').checked,
+    repeatAlarm:     document.getElementById('cfgRepeatAlarm').checked,
+  };
+}
+function applySoundConfig(cfg){
+  document.getElementById('cfgSoundBreakStart').checked = cfg.soundBreakStart;
+  document.getElementById('cfgSubtleAlarm').checked     = cfg.subtleAlarm;
+  document.getElementById('cfgSoundBreakEnd').checked   = cfg.soundBreakEnd;
+  document.getElementById('cfgRepeatAlarm').checked     = cfg.repeatAlarm;
+  syncRepeatAlarmRow(); syncSubtleAlarmRow();
+}
+function saveScriptSoundConfig(){
+  localStorage.setItem(SCRIPT_SOUND_KEY, JSON.stringify(readSoundConfig()));
+}
+function loadScriptSoundConfig(){
+  try{ return JSON.parse(localStorage.getItem(SCRIPT_SOUND_KEY))||SCRIPT_SOUND_DEFAULTS; }
+  catch(e){ return SCRIPT_SOUND_DEFAULTS; }
+}
+function setPresetManagementVisible(visible){
+  ['presetManagementRow','presetChangedRow'].forEach(id=>{
+    document.getElementById(id).style.display=visible?'':'none';
+  });
+}
+let _scriptEditorMode = 'create';
+let _scriptEditorName = null;
+let _scriptEditorRows = [];
+
+function getScripts(){
+  try{ return JSON.parse(localStorage.getItem('practTimerScripts'))||{}; }catch(e){ return {}; }
+}
+function saveScripts(scripts){ localStorage.setItem('practTimerScripts',JSON.stringify(scripts)); }
+
+function updateStickerLabels(){
+  document.querySelector('.enc-red .sticker-name').textContent   = S.scriptActive ? 'Script Total Duration' : 'Long Break';
+  document.querySelector('.enc-green .sticker-name').textContent = S.scriptActive ? 'Script Step Duration'  : 'Short Break';
+}
+
+function setTimingFieldsVisible(visible){
+  ['cfgLongPlay','cfgLongBreak','cfgShortPlay','cfgShortBreak'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ const row=el.closest('.cfg-field'); if(row) row.style.display=visible?'':'none'; }
+  });
+}
+
+function showScriptDoneDialog(){
+  document.getElementById('scriptDoneModal').classList.add('open');
+}
+
+document.getElementById('btnScriptDoneOk').addEventListener('click',()=>{
+  document.getElementById('scriptDoneModal').classList.remove('open');
+  S.longSecs=0; S.shortSecs=0; S.scriptCurrentRow=0;
+  S.inBreak=false; S.breakRunning=false; S.breakSecs=0; S.breakDuration=0;
+  S.shortTriggered=false; S.longHit=false; S.wasLong=false;
+  stopAlarm();
+  setBtn('BEGIN');
+  if(S.scriptRows[0]) showMsg(S.scriptRows[0].message,'green');
+  else clearMsg();
+  renderAll();
+});
+
+function populateScriptSelect(){
+  const sel=document.getElementById('cfgScriptSelect');
+  const scripts=getScripts();
+  sel.innerHTML='<option value="">None</option>';
+  Object.keys(scripts).forEach(name=>{
+    const opt=document.createElement('option');
+    opt.value=opt.textContent=name;
+    sel.appendChild(opt);
+  });
+  const cOpt=document.createElement('option');
+  cOpt.value='__create__'; cOpt.textContent='Create New Script...';
+  sel.appendChild(cOpt);
+}
+
+function activateScript(name){
+  const scripts=getScripts();
+  if(!scripts[name]) return;
+  S.scriptActive=true; S.scriptName=name; S.scriptRows=scripts[name]; S.scriptCurrentRow=0;
+  const presetSel=document.getElementById('cfgPresetSelect');
+  const curPreset=presetSel.value;
+  if(curPreset!=='__scriptmode__') _prevPreset=curPreset;
+  let ph=presetSel.querySelector('option[value="__scriptmode__"]');
+  if(!ph){
+    ph=document.createElement('option');
+    ph.value='__scriptmode__'; ph.textContent='— Script Mode —';
+    presetSel.insertBefore(ph,presetSel.firstChild);
+  }
+  presetSel.value='__scriptmode__';
+  setTimingFieldsVisible(false);
+  updateStickerLabels();
+  document.getElementById('btnEditScript').style.display='';
+  _presetSoundConfig=readSoundConfig();
+  applySoundConfig(loadScriptSoundConfig());
+  setPresetManagementVisible(false);
+  if(S.scriptRows[0]&&!S.shortTriggered) showMsg(S.scriptRows[0].message,'green');
+}
+
+function deactivateScript(){
+  S.scriptActive=false; S.scriptName=''; S.scriptRows=[]; S.scriptCurrentRow=0;
+  S.shortTriggered=false; S.longHit=false; S.inBreak=false;
+  S.breakRunning=false; S.breakSecs=0; S.breakDuration=0; S.wasLong=false;
+  stopAlarm();
+  const presetSel=document.getElementById('cfgPresetSelect');
+  const ph=presetSel.querySelector('option[value="__scriptmode__"]');
+  if(ph) ph.remove();
+  const target=_prevPreset||'Default';
+  if(presetSel.querySelector('option[value="'+target+'"]')){
+    presetSel.value=target;
+    setCurrentPresetName(target);
+    applyPreset(getAllPresets()[target]||BUILT_IN_PRESETS['Default']);
+  }
+  setTimingFieldsVisible(true);
+  updateStickerLabels();
+  document.getElementById('btnEditScript').style.display='none';
+  saveScriptSoundConfig();
+  applySoundConfig(_presetSoundConfig);
+  setPresetManagementVisible(true);
+  clearMsg();
+  updatePresetButtons();
+  renderAll();
+}
+
+document.getElementById('cfgScriptSelect').addEventListener('change',function(){
+  const val=this.value;
+  if(val==='__create__'){ this.value=''; openScriptModal('create',null); return; }
+  if(val==='') deactivateScript();
+  else activateScript(val);
+});
+
+document.getElementById('btnEditScript').addEventListener('click',()=>{
+  const name=document.getElementById('cfgScriptSelect').value;
+  if(name&&name!=='__create__'&&name!=='') openScriptModal('edit',name);
+});
+
+// ── SCRIPT EDITOR MODAL ──────────────────────────────────────────────────────
+function openScriptModal(mode,name){
+  _scriptEditorMode=mode; _scriptEditorName=name;
+  const scripts=getScripts();
+  document.getElementById('scriptModalTitle').textContent=
+    mode==='edit'?'Edit Script: '+name:'Create New Script';
+  document.getElementById('btnScriptSave').style.display=mode==='edit'?'':'none';
+  _scriptEditorRows=mode==='edit'&&scripts[name]?scripts[name].map(r=>({...r})):[];
+  renderScriptTable();
+  document.getElementById('scriptModal').classList.add('open');
+}
+
+function closeScriptModal(){
+  document.getElementById('scriptModal').classList.remove('open');
+}
+
+function renderScriptTable(){
+  const tbody=document.getElementById('scriptTableBody');
+  tbody.innerHTML='';
+  _scriptEditorRows.forEach((row,i)=>tbody.appendChild(createFilledScriptRow(row,i)));
+  tbody.appendChild(createEmptyScriptRow());
+}
+
+function createFilledScriptRow(row,i){
+  const tr=document.createElement('tr');
+  const mkInp=(type,val,ph)=>{
+    const inp=document.createElement('input');
+    inp.type=type; inp.value=(val!==undefined&&val!==null)?val:''; inp.placeholder=ph;
+    if(type==='number'){inp.min='0';inp.step='any';inp.addEventListener('keydown',e=>{if(['e','E','+','-'].includes(e.key))e.preventDefault();});}
+    inp.className='script-input'; return inp;
+  };
+  const msgInp  =mkInp('text',  row.message,         'e.g. Scales');
+  const pracInp =mkInp('number',row.practiceDuration, 'min');
+  const brkInp  =mkInp('number',row.breakDuration,    'min');
+  msgInp.addEventListener('input', ()=>{ row.message=msgInp.value; });
+  pracInp.addEventListener('input',()=>{ row.practiceDuration=parseFloat(pracInp.value)||0; });
+  brkInp.addEventListener('input', ()=>{ row.breakDuration=parseFloat(brkInp.value)||0; });
+  const delBtn=document.createElement('button');
+  delBtn.textContent='×'; delBtn.className='script-del-btn'; delBtn.title='Remove row';
+  delBtn.addEventListener('click',()=>{ _scriptEditorRows.splice(i,1); renderScriptTable(); });
+  [msgInp,pracInp,brkInp].forEach(inp=>{
+    const td=document.createElement('td'); td.appendChild(inp); tr.appendChild(td);
+  });
+  const dTd=document.createElement('td'); dTd.appendChild(delBtn); tr.appendChild(dTd);
+  return tr;
+}
+
+function createEmptyScriptRow(){
+  const tr=document.createElement('tr');
+  const mkInp=(type,ph)=>{
+    const inp=document.createElement('input');
+    inp.type=type; inp.placeholder=ph;
+    if(type==='number'){inp.min='0';inp.step='any';inp.addEventListener('keydown',e=>{if(['e','E','+','-'].includes(e.key))e.preventDefault();});}
+    inp.className='script-input'; return inp;
+  };
+  const msgInp  =mkInp('text',  'Message...');
+  const pracInp =mkInp('number','min');
+  const brkInp  =mkInp('number','min');
+  let rowCommitted=false;
+  const check=()=>{
+    if(rowCommitted) return;
+    const msg=msgInp.value.trim();
+    const prac=parseFloat(pracInp.value);
+    const brkVal=brkInp.value.trim();
+    const brk=brkVal!==''?parseFloat(brkVal):NaN;
+    if(msg&&!isNaN(prac)&&prac>0&&!isNaN(brk)&&brk>=0){
+      rowCommitted=true;
+      _scriptEditorRows.push({message:msg,practiceDuration:prac,breakDuration:brk});
+      renderScriptTable();
+      const rows=document.getElementById('scriptTableBody').querySelectorAll('tr');
+      if(rows.length>0) rows[rows.length-1].querySelector('input').focus();
+    }
+  };
+  brkInp.addEventListener('blur',check);
+  brkInp.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key==='Tab'){ e.preventDefault(); check(); } });
+  [msgInp,pracInp,brkInp].forEach(inp=>{
+    const td=document.createElement('td'); td.appendChild(inp); tr.appendChild(td);
+  });
+  tr.appendChild(document.createElement('td'));
+  return tr;
+}
+
+function validateScriptRows(){
+  if(_scriptEditorRows.length===0){
+    alert('Please fill in at least one row before saving.'); return false;
+  }
+  for(let i=0;i<_scriptEditorRows.length;i++){
+    const r=_scriptEditorRows[i];
+    if(!r.message||!r.message.trim()){ alert('Row '+(i+1)+': Message cannot be empty.'); return false; }
+    if(!r.practiceDuration||r.practiceDuration<=0){ alert('Row '+(i+1)+': Practice Duration must be a positive number.'); return false; }
+    if(isNaN(r.breakDuration)||r.breakDuration<0){ alert('Row '+(i+1)+': Break Duration must be 0 or a positive number.'); return false; }
+  }
+  return true;
+}
+
+function persistAndActivateScript(name){
+  const scripts=getScripts();
+  scripts[name]=_scriptEditorRows.map(r=>({...r}));
+  saveScripts(scripts);
+  closeScriptModal();
+  populateScriptSelect();
+  document.getElementById('cfgScriptSelect').value=name;
+  if(S.scriptActive&&S.scriptName===name){
+    S.scriptRows=scripts[name];
+    S.scriptCurrentRow=Math.min(S.scriptCurrentRow,S.scriptRows.length-1);
+  }
+  activateScript(name);
+}
+
+document.getElementById('btnScriptSave').addEventListener('click',()=>{
+  if(!validateScriptRows()) return;
+  persistAndActivateScript(_scriptEditorName);
+});
+
+document.getElementById('btnScriptSaveAs').addEventListener('click',()=>{
+  if(!validateScriptRows()) return;
+  const suggested=_scriptEditorMode==='edit'?_scriptEditorName+' (copy)':'My Script';
+  const name=window.prompt('Save script as:',suggested);
+  if(!name||!name.trim()) return;
+  persistAndActivateScript(name.trim());
+});
+
+document.getElementById('btnScriptCancel').addEventListener('click',closeScriptModal);
+document.getElementById('scriptModalClose').addEventListener('click',closeScriptModal);
+
+// Init
+populateScriptSelect();
 
 </script>
 
