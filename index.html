@@ -442,6 +442,32 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <select id="cfgScriptSelect"></select>
     <button class="cfg-action-btn" id="btnEditScript" style="display:none">&#9998; Edit Script</button>
   </div>
+  <!-- Preset management — full width -->
+  <div id="presetManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
+    <label style="font-size:11px;letter-spacing:.2em;color:#888;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;display:block;margin-bottom:8px">Preset Management</label>
+    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+      <button class="cfg-action-btn" id="btnSavePreset">&#128190; Save Preset</button>
+      <button class="cfg-action-btn" id="btnSavePresetAs">&#128190; Save Preset As&#8230;</button>
+      <button class="cfg-action-btn" id="btnRenamePreset">&#9998; Rename Preset</button>
+      <button class="cfg-action-btn cfg-action-reset" id="btnDeletePreset">&#128465; Delete Preset</button>
+      <button class="cfg-action-btn" id="btnExportPreset">&#128228; Export Preset</button>
+      <button class="cfg-action-btn" id="btnImportPreset">&#128229; Import Preset</button>
+      <input type="file" id="importPresetFileInput" accept=".json" style="display:none"/>
+    </div>
+  </div>
+  <!-- Changed indicator -->
+  <div id="presetChangedRow" class="cfg-field cfg-full" style="min-height:20px;text-align:center">
+    <span id="presetChangedMsg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:rgba(255,160,40,0.75)">&#9679; PRESET HAS CHANGED&#8230;</span>
+  </div>
+  <!-- Script management — full width -->
+  <div id="scriptManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px;display:none">
+    <label style="font-size:11px;letter-spacing:.2em;color:#888;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;display:block;margin-bottom:8px">Script Management</label>
+    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+      <button class="cfg-action-btn" id="btnExportScript" style="display:none">&#128228; Export Script</button>
+      <button class="cfg-action-btn" id="btnImportScript">&#128229; Import Script</button>
+      <input type="file" id="importScriptFileInput" accept=".json" style="display:none"/>
+    </div>
+  </div>
   <!-- Sound alerts: headline + content in one cell -->
   <div class="cfg-field" style="display:flex;flex-direction:column;gap:6px">
     <label>Sound Alerts</label>
@@ -462,20 +488,6 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   <div class="cfg-field" style="display:flex;flex-direction:column;gap:6px;align-self:start">
     <label class="cfg-coffee-label">COFFEE <span style="line-height:1;vertical-align:middle;font-size:13px">☕</span></label>
     <p class="cfg-coffee-text">Hey, if you enjoy PractTimer, you can <a class="cfg-coffee-link" href="https://ko-fi.com/ancientbassghoul" target="_blank">buy me a coffee</a>. It'll make my day :-)</p>
-  </div>
-  <!-- Preset management — full width -->
-  <div id="presetManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
-    <label style="font-size:11px;letter-spacing:.2em;color:#888;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;display:block;margin-bottom:8px">Preset Management</label>
-    <div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
-      <button class="cfg-action-btn" id="btnSavePreset">&#128190; Save Preset</button>
-      <button class="cfg-action-btn" id="btnSavePresetAs">&#128190; Save Preset As&#8230;</button>
-      <button class="cfg-action-btn" id="btnRenamePreset">&#9998; Rename Preset</button>
-      <button class="cfg-action-btn cfg-action-reset" id="btnDeletePreset">&#128465; Delete Preset</button>
-    </div>
-  </div>
-  <!-- Changed indicator -->
-  <div id="presetChangedRow" class="cfg-field cfg-full" style="min-height:20px;text-align:center">
-    <span id="presetChangedMsg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:rgba(255,160,40,0.75)">&#9679; PRESET HAS CHANGED&#8230;</span>
   </div>
   <!-- Stats data — full width -->
   <div class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
@@ -1008,7 +1020,8 @@ document.getElementById('cfgPresetSelect').addEventListener('change', ()=>{
     document.getElementById('cfgScriptSelect').value='';
     setTimingFieldsVisible(true);
     updateStickerLabels();
-    document.getElementById('btnEditScript').style.display='none';
+    setScriptButtonsVisible(false);
+    setManagementMode('preset');
     clearMsg();
     renderAll();
   }
@@ -1082,6 +1095,53 @@ document.getElementById('btnDeletePreset').addEventListener('click', ()=>{
   applyPreset(getAllPresets()[selectName]);
   updatePresetButtons();
   hideChangedMsg();
+});
+
+// Export Preset
+document.getElementById('btnExportPreset').addEventListener('click', ()=>{
+  const name = document.getElementById('cfgPresetSelect').value;
+  const data = readFields();
+  const blob = new Blob([JSON.stringify({name, ...data}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `practTimer_preset_${name.replace(/[^a-z0-9]+/gi,'_')}.json`;
+  a.click();
+});
+
+// Import Preset
+document.getElementById('btnImportPreset').addEventListener('click', ()=>{
+  document.getElementById('importPresetFileInput').click();
+});
+document.getElementById('importPresetFileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      const required = ['longPlay','longBreak','shortPlay','shortBreak'];
+      if(!required.every(k => typeof parsed[k]==='number')) throw new Error('bad shape');
+      const name = window.prompt('Save imported preset as:', parsed.name || 'Imported Preset');
+      if(!name || !name.trim()) return;
+      const trimmed = name.trim();
+      if(isBuiltIn(trimmed)){ alert(`"${trimmed}" is a built-in preset name and cannot be used.`); return; }
+      const p = getUserPresets();
+      p[trimmed] = {
+        longPlay: parsed.longPlay, longBreak: parsed.longBreak, shortPlay: parsed.shortPlay, shortBreak: parsed.shortBreak,
+        soundBreakStart: !!parsed.soundBreakStart, soundBreakEnd: parsed.soundBreakEnd!==false,
+        repeatAlarm: parsed.repeatAlarm!==false, subtleAlarm: !!parsed.subtleAlarm,
+      };
+      saveUserPresets(p);
+      setCurrentPresetName(trimmed);
+      populateSelect(trimmed);
+      applyPreset(getAllPresets()[trimmed]);
+      updatePresetButtons();
+      hideChangedMsg();
+      alert('Preset imported successfully!');
+    } catch(err){ alert('Could not read preset file. Make sure it is a valid PractTimer preset JSON.'); }
+  };
+  reader.readAsText(file);
 });
 
 // Watch all config fields for changes
@@ -1409,10 +1469,16 @@ function loadScriptSoundConfig(){
   try{ return JSON.parse(localStorage.getItem(SCRIPT_SOUND_KEY))||SCRIPT_SOUND_DEFAULTS; }
   catch(e){ return SCRIPT_SOUND_DEFAULTS; }
 }
-function setPresetManagementVisible(visible){
+function setManagementMode(mode){
+  const preset = mode==='preset';
   ['presetManagementRow','presetChangedRow'].forEach(id=>{
-    document.getElementById(id).style.display=visible?'':'none';
+    document.getElementById(id).style.display=preset?'':'none';
   });
+  document.getElementById('scriptManagementRow').style.display=preset?'none':'';
+}
+function setScriptButtonsVisible(visible){
+  document.getElementById('btnEditScript').style.display=visible?'':'none';
+  document.getElementById('btnExportScript').style.display=visible?'':'none';
 }
 let _scriptEditorMode = 'create';
 let _scriptEditorName = null;
@@ -1481,10 +1547,10 @@ function activateScript(name){
   presetSel.value='__scriptmode__';
   setTimingFieldsVisible(false);
   updateStickerLabels();
-  document.getElementById('btnEditScript').style.display='';
+  setScriptButtonsVisible(true);
   _presetSoundConfig=readSoundConfig();
   applySoundConfig(loadScriptSoundConfig());
-  setPresetManagementVisible(false);
+  setManagementMode('script');
   if(S.scriptRows[0]&&!S.shortTriggered) showMsg(S.scriptRows[0].message,'green');
 }
 
@@ -1504,10 +1570,10 @@ function deactivateScript(){
   }
   setTimingFieldsVisible(true);
   updateStickerLabels();
-  document.getElementById('btnEditScript').style.display='none';
+  setScriptButtonsVisible(false);
   saveScriptSoundConfig();
   applySoundConfig(_presetSoundConfig);
-  setPresetManagementVisible(true);
+  setManagementMode('preset');
   clearMsg();
   updatePresetButtons();
   renderAll();
@@ -1523,6 +1589,51 @@ document.getElementById('cfgScriptSelect').addEventListener('change',function(){
 document.getElementById('btnEditScript').addEventListener('click',()=>{
   const name=document.getElementById('cfgScriptSelect').value;
   if(name&&name!=='__create__'&&name!=='') openScriptModal('edit',name);
+});
+
+// Export Script
+document.getElementById('btnExportScript').addEventListener('click', ()=>{
+  const name = document.getElementById('cfgScriptSelect').value;
+  if(!name || name==='__create__') return;
+  const rows = getScripts()[name];
+  if(!rows) return;
+  const blob = new Blob([JSON.stringify({name, rows}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `practTimer_script_${name.replace(/[^a-z0-9]+/gi,'_')}.json`;
+  a.click();
+});
+
+// Import Script
+document.getElementById('btnImportScript').addEventListener('click', ()=>{
+  document.getElementById('importScriptFileInput').click();
+});
+document.getElementById('importScriptFileInput').addEventListener('change', e=>{
+  const file = e.target.files[0];
+  e.target.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      const rows = Array.isArray(parsed) ? parsed : parsed.rows;
+      if(!Array.isArray(rows) || rows.length===0) throw new Error('bad shape');
+      rows.forEach(r=>{
+        if(typeof r.message!=='string' || typeof r.practiceDuration!=='number' || typeof r.breakDuration!=='number') throw new Error('bad row');
+      });
+      const name = window.prompt('Save imported script as:', (!Array.isArray(parsed) && parsed.name) || 'Imported Script');
+      if(!name || !name.trim()) return;
+      const trimmed = name.trim();
+      const scripts = getScripts();
+      scripts[trimmed] = rows.map(r=>({message:r.message, practiceDuration:r.practiceDuration, breakDuration:r.breakDuration}));
+      saveScripts(scripts);
+      populateScriptSelect();
+      document.getElementById('cfgScriptSelect').value = trimmed;
+      activateScript(trimmed);
+      alert('Script imported successfully!');
+    } catch(err){ alert('Could not read script file. Make sure it is a valid PractTimer script JSON.'); }
+  };
+  reader.readAsText(file);
 });
 
 // ── SCRIPT EDITOR MODAL ──────────────────────────────────────────────────────
