@@ -436,12 +436,6 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
     <label>Short Break Duration</label>
     <div class="cfg-row"><input type="number" id="cfgShortBreak" value="5" min="0.01" step="any"/><span class="cfg-unit">MIN</span></div>
   </div>
-  <!-- Use Script row -->
-  <div class="cfg-field cfg-full" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-    <label style="white-space:nowrap;margin-bottom:0;min-width:90px">USE SCRIPT</label>
-    <select id="cfgScriptSelect"></select>
-    <button class="cfg-action-btn" id="btnEditScript" style="display:none">&#9998; Edit Script</button>
-  </div>
   <!-- Preset management — full width -->
   <div id="presetManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px">
     <label style="font-size:11px;letter-spacing:.2em;color:#888;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;display:block;margin-bottom:8px">Preset Management</label>
@@ -458,6 +452,12 @@ input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-in
   <!-- Changed indicator -->
   <div id="presetChangedRow" class="cfg-field cfg-full" style="min-height:20px;text-align:center">
     <span id="presetChangedMsg" style="display:none;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.2em;color:rgba(255,160,40,0.75)">&#9679; PRESET HAS CHANGED&#8230;</span>
+  </div>
+  <!-- Use Script row -->
+  <div class="cfg-field cfg-full" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <label style="white-space:nowrap;margin-bottom:0;min-width:90px">USE SCRIPT</label>
+    <select id="cfgScriptSelect"></select>
+    <button class="cfg-action-btn" id="btnEditScript" style="display:none">&#9998; Edit Script</button>
   </div>
   <!-- Script management — full width -->
   <div id="scriptManagementRow" class="cfg-field cfg-full" style="border-top:1px solid #1e1e30;padding-top:10px;display:none">
