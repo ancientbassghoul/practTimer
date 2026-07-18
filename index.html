@@ -1161,6 +1161,7 @@ document.getElementById('importPresetFileInput').addEventListener('change', e=>{
   populateSelect(currentName);
   applyPreset(getAllPresets()[currentName] || BUILT_IN_PRESETS['Default']);
   updatePresetButtons();
+  setManagementMode('preset');
 })();
 
 // ── KEEP AWAKE — silent audio loop ───────────────────────────────────────────
@@ -1471,10 +1472,11 @@ function loadScriptSoundConfig(){
 }
 function setManagementMode(mode){
   const preset = mode==='preset';
+  const hasScripts = Object.keys(getScripts()).length>0;
   ['presetManagementRow','presetChangedRow'].forEach(id=>{
     document.getElementById(id).style.display=preset?'':'none';
   });
-  document.getElementById('scriptManagementRow').style.display=preset?'none':'';
+  document.getElementById('scriptManagementRow').style.display=(!preset||!hasScripts)?'':'none';
 }
 function setScriptButtonsVisible(visible){
   document.getElementById('btnEditScript').style.display=visible?'':'none';
